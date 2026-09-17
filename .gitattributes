@@ -1,0 +1,3 @@
+# Linux project — keep everything LF; CRLF breaks shell scripts and
+# Go tooling on Linux.
+* text=auto eol=lf

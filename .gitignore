@@ -1,0 +1,11 @@
+# macOS / Windows metadata
+.DS_Store
+Thumbs.db
+
+# local build output (dist/ keeps the release binary intentionally)
+/corenexd
+*.exe
+
+# Go test and coverage artifacts
+*.test
+*.out

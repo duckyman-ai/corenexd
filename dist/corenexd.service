@@ -1,0 +1,14 @@
+[Unit]
+Description=corenexd — Cooler Master Core Nex Digital AIO LCD telemetry
+After=multi-user.target
+
+[Service]
+# Defaults suit most machines: ring = CPU load, temperature page cycles
+# CPU ↔ GPU every 15 s. Add flags here to customise, e.g.:
+#   ExecStart=/usr/local/bin/corenexd --ring gpu --temp-unit f
+ExecStart=/usr/local/bin/corenexd
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
