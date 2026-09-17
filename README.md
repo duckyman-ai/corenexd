@@ -93,6 +93,9 @@ GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o corenexd .
 ## Quick start
 
 ```sh
+# one-command install (Linux): binary from GitHub Releases + systemd service
+curl -fsSL https://raw.githubusercontent.com/duckyman-ai/corenexd/main/dist/install.sh | sudo sh
+
 # see what corenexd detects on your machine (attach to bug reports)
 corenexd --doctor
 
