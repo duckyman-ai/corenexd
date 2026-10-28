@@ -61,6 +61,7 @@ type reading struct {
 	gpuUtil int
 	gpuC    float64
 	pumpRPM int
+	failed  bool // the requested temperature sensor could not be read
 }
 
 // feeder ties sensor discovery to the display policy and carries the
@@ -86,7 +87,7 @@ func newFeeder(opts options) *feeder {
 		cpuTemp: findCPUTempPath(),
 		fan:     findFanPath(opts.fanChip, opts.fanInput),
 		pump:    findFanPath(opts.fanChip, opts.pumpInput),
-		gpu:     newGPUSource(),
+		gpu:     newGPUSource(parseGPUSelector(opts.gpu)),
 		gpuSel:  parseGPUSelector(opts.gpu),
 		start:   time.Now(),
 	}
@@ -110,8 +111,13 @@ func (f *feeder) sample() reading {
 		page = "gpu"
 	}
 	pageC := cpuTempC
-	if page == "gpu" && gpuTempC > 0 {
+	sensorFail := false
+	if page == "gpu" {
 		pageC = gpuTempC
+		sensorFail = gpuTempC <= 0
+	} else if f.opts.tempMode == "gpu" {
+		sensorFail = true // GPU requested but no GPU source: never show CPU silently
+		pageC = 0
 	}
 	shown := pageC
 	if f.opts.tempUnit == "f" {
@@ -154,6 +160,7 @@ func (f *feeder) sample() reading {
 		gpuUtil: gpuUtil,
 		gpuC:    gpuTempC,
 		pumpRPM: pumpRPM,
+		failed:  sensorFail,
 	}
 }
 
@@ -267,13 +274,16 @@ func main() {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			tempC, err := draw(dev, feed)
+			r, err := draw(dev, feed)
 			if err != nil {
 				log.Printf("device write failed: %v", err)
 				dev = rediscover(dev)
 				continue
 			}
-			if opts.alertTemp > 0 && tempC >= opts.alertTemp {
+			if r.failed {
+				log.Printf("temperature sensor read failed (page=%s)", r.page)
+			}
+			if opts.alertTemp > 0 && (r.failed || r.pageC >= opts.alertTemp) {
 				animateAlert(ctx, dev, feed)
 			}
 		}
@@ -282,14 +292,14 @@ func main() {
 
 // draw samples, writes one frame and returns the active page temperature in
 // °C so callers can drive the alert animation.
-func draw(dev string, f *feeder) (float64, error) {
+func draw(dev string, f *feeder) (reading, error) {
 	r := f.sample()
 	if f.opts.verbose {
 		log.Printf("page=%s cpu=%.1f%% %dMHz temp=%.1fC gpu=%d%%/%.0fC rpm=%d pump=%d ring=%.1f%% frame=% x",
 			r.page, r.cpuPct, r.cpuMHz, r.pageC, r.gpuUtil, r.gpuC, r.rpm, r.pumpRPM, r.ringPct,
 			buildFrame(r.sample))
 	}
-	return r.pageC, writeReport(dev, buildFrame(r.sample))
+	return r, writeReport(dev, buildFrame(r.sample))
 }
 
 // animateAlert takes over the outer ring with a blink or scan effect while
@@ -322,7 +332,7 @@ func animateAlert(ctx context.Context, dev string, f *feeder) {
 			if f.opts.verbose {
 				log.Printf("alert page=%s temp=%.1fC", r.page, r.pageC)
 			}
-			if r.pageC < f.opts.alertTemp {
+			if !r.failed && r.pageC < f.opts.alertTemp {
 				return // cooled down; the main loop resumes normal rendering
 			}
 		case <-anim.C:

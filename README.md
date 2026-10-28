@@ -218,6 +218,9 @@ listed at all, your board's Super I/O driver is not loaded — for many boards
 **GPU temperature never appears** — AMD cards are read straight from sysfs;
 NVIDIA cards need `nvidia-smi` on the `PATH`. With several NVIDIA cards the
 hottest one is shown by default; pin a specific card with `--gpu 1`.
+A pinned `--gpu N` always reads `nvidia-smi` (even when an AMD iGPU is
+present), and if that card disappears the display shows 0 and raises the
+alert instead of switching to another card or to the CPU temperature.
 
 ## How it works
 

@@ -101,9 +101,10 @@ func TestGPUPick(t *testing.T) {
 	if c, _ := parseGPUSelector("max").pick(tie); c.index != 1 {
 		t.Errorf("tie break picked %+v", c)
 	}
-	// A pinned index that no longer exists (card removed) falls back to max.
-	if c, ok := parseGPUSelector("3").pick(cards); !ok || c.index != 1 {
-		t.Errorf("missing index fallback picked %+v ok=%v", c, ok)
+	// A pinned index that no longer exists (card removed) is a failure, never
+	// another card's temperature.
+	if c, ok := parseGPUSelector("3").pick(cards); ok {
+		t.Errorf("missing index should not be ok, picked %+v", c)
 	}
 	if _, ok := (gpuSelector{}).pick(nil); ok {
 		t.Error("empty card list should not be ok")
