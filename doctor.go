@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 // runDoctor prints everything corenexd can detect on this machine — device
@@ -19,13 +20,13 @@ func runDoctor(opts options, devPath string) int {
 
 	dev := devPath
 	if dev == "" {
-		if found, err := findHidraw(usbVID, usbPID); err == nil {
+		if found, err := findCooler(); err == nil {
 			dev = found
 		}
 	}
 	switch {
 	case dev == "":
-		fmt.Printf("device   : NOT FOUND (USB %s:%s) — is the cooler connected?\n", usbVID, usbPID)
+		fmt.Printf("device   : NOT FOUND (USB %s:{%s}) — is the cooler connected?\n", usbVID, strings.Join(usbPIDs, ","))
 		problems++
 	default:
 		note := ""

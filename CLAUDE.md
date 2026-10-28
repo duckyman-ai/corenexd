@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`corenexd` is a Linux daemon that feeds live telemetry (CPU load, clock, CPU/GPU temperatures, fan RPM) to the segment LCD of Cooler Master MasterLiquid Core Nex Digital AIO coolers (USB HID `2516:0234`) by writing 64-byte HID input reports with report id `0x10`. Pure Go standard library — there are intentionally **no external dependencies**; adding one needs a strong reason.
+`corenexd` is a Linux daemon that feeds live telemetry (CPU load, clock, CPU/GPU temperatures, fan RPM) to the segment LCD of Cooler Master MasterLiquid Core Nex Digital AIO coolers (USB HID `2516:0234` white, `2516:0232` black) by writing 64-byte HID input reports with report id `0x10`. Pure Go standard library — there are intentionally **no external dependencies**; adding one needs a strong reason.
 
 ## Commands
 

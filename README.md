@@ -28,7 +28,8 @@ binary, no runtime dependencies, everything auto-detected.
 | Device | USB ID | Status |
 |---|---|---|
 | MasterLiquid Core Nex Digital (MLQ-Core-Nex-Digital-WH) | `2516:0234` | tested, daily driven |
-| Other Core Nex Digital variants (240/360, black) | likely `2516:*` | protocol probably shared — reports welcome |
+| MasterLiquid Core Nex Digital 360 (MLQ-Core-Nex-Digital-BK) | `2516:0232` | tested (same HID descriptor) |
+| Other Core Nex Digital variants (240, …) | likely `2516:*` | protocol probably shared — reports welcome |
 
 Not implemented (and out of scope): ARGB/lighting control, images or GIFs on
 the display, fan/pump curves. corenexd only drives the telemetry display.
@@ -37,7 +38,7 @@ the display, fan/pump curves. corenexd only drives the telemetry display.
 
 - A Linux system with `hidraw` support (any mainstream distribution)
 - The cooler plugged into an internal USB header — verify with
-  `lsusb | grep 2516:0234`
+  `lsusb | grep -E '2516:023[24]'`
 - Optional: `nvidia-smi` on the `PATH` for NVIDIA GPU readings (it is
   installed together with the NVIDIA driver)
 - To build from source: Go 1.25 or newer
@@ -146,7 +147,7 @@ corenexd
 ## Options
 
 ```
---dev PATH          hidraw node (default: auto-detect 2516:0234)
+--dev PATH          hidraw node (default: auto-detect 2516:0234 / 0232)
 --interval D        refresh interval (default 5s)
 --ring SRC          outer ring source: cpu, gpu, rpm, pump
 --temp-mode MODE    centre page: cpu, gpu, cycle (default cycle)
@@ -201,8 +202,8 @@ corenexd --interval 1s --smooth 1
 
 ## Troubleshooting
 
-**No hidraw node for 2516:0234** — the cooler is not visible over USB. Check
-`lsusb` for `2516:0234` and confirm the AIO's USB cable is seated on an
+**No hidraw node for 2516:0234 / 0232** — the cooler is not visible over USB. Check
+`lsusb` for `2516:0234` (white) or `2516:0232` (black) and confirm the AIO's USB cable is seated on an
 internal header.
 
 **Permission denied writing the device** — `corenexd --doctor` will flag it.

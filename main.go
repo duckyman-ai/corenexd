@@ -3,7 +3,8 @@
 // interface. It runs as a daemon (or with --once for a single frame) and
 // needs no vendor software.
 //
-// Tested device: MLQ-Core-Nex-Digital-WH (USB HID 2516:0234).
+// Tested devices: MLQ-Core-Nex-Digital-WH (USB HID 2516:0234) and
+// MLQ-Core-Nex-Digital-BK (2516:0232).
 package main
 
 import (
@@ -174,7 +175,7 @@ func main() {
 	log.SetPrefix("corenexd: ")
 
 	var (
-		devPath    = flag.String("dev", "", "hidraw node to use (default: auto-detect 2516:0234)")
+		devPath    = flag.String("dev", "", "hidraw node to use (default: auto-detect 2516:0234 or 2516:0232)")
 		interval   = flag.Duration("interval", defaultInterval, "refresh interval, e.g. 2s")
 		ring       = flag.String("ring", "cpu", "outer ring source: cpu, gpu, rpm, pump")
 		tempMode   = flag.String("temp-mode", "cycle", "centre temperature page: cpu, gpu, cycle")
@@ -237,7 +238,7 @@ func main() {
 	dev := *devPath
 	if dev == "" {
 		var err error
-		dev, err = findHidraw(usbVID, usbPID)
+		dev, err = findCooler()
 		if err != nil {
 			log.Fatalf("no hidraw node for %s:%s: %v (is the AIO connected?)", usbVID, usbPID, err)
 		}
@@ -368,7 +369,7 @@ func (a *alertRing) next() float64 {
 // rediscover re-resolves the hidraw node after a write failure (the cooler
 // may have been replugged) and returns the node to use.
 func rediscover(current string) string {
-	if dev, err := findHidraw(usbVID, usbPID); err == nil && dev != current {
+	if dev, err := findCooler(); err == nil && dev != current {
 		log.Printf("device rediscovered at %s", dev)
 		return dev
 	}
