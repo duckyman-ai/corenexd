@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 // runDoctor prints everything corenexd can detect on this machine — device
@@ -19,13 +20,13 @@ func runDoctor(opts options, devPath string) int {
 
 	dev := devPath
 	if dev == "" {
-		if found, err := findHidraw(usbVID, usbPID); err == nil {
+		if found, err := findCooler(); err == nil {
 			dev = found
 		}
 	}
 	switch {
 	case dev == "":
-		fmt.Printf("device   : NOT FOUND (USB %s:%s) — is the cooler connected?\n", usbVID, usbPID)
+		fmt.Printf("device   : NOT FOUND (USB %s:{%s}) — is the cooler connected?\n", usbVID, strings.Join(usbPIDs, ","))
 		problems++
 	default:
 		note := ""
@@ -80,7 +81,7 @@ func runDoctor(opts options, devPath string) int {
 		problems++
 	}
 
-	switch gpu := newGPUSource(); gpu.kind {
+	switch gpu := newGPUSource(parseGPUSelector(opts.gpu)); gpu.kind {
 	case "nvidia":
 		fmt.Println("gpu      : nvidia")
 		ctx, cancel := context.WithTimeout(context.Background(), smiTimeout)
@@ -94,10 +95,14 @@ func runDoctor(opts options, devPath string) int {
 			break
 		}
 		cards := parseNvidiaSMI(string(out))
-		chosen, _ := parseGPUSelector(opts.gpu).pick(cards)
+		chosen, ok := parseGPUSelector(opts.gpu).pick(cards)
+		if !ok {
+			fmt.Printf("  --gpu %s NOT FOUND\n", opts.gpu)
+			problems++
+		}
 		for _, c := range cards {
 			tag := ""
-			if c.index == chosen.index {
+			if ok && c.index == chosen.index {
 				tag = fmt.Sprintf("  <- displayed (--gpu %s)", opts.gpu)
 			}
 			fmt.Printf("  [%d] %3d%% %3d°C  %s%s\n", c.index, c.util, c.temp, c.name, tag)

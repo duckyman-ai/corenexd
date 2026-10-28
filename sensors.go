@@ -203,7 +203,7 @@ func parseGPUSelector(spec string) gpuSelector {
 
 // pick returns the card for the selector: an explicit index when present,
 // otherwise the hottest card (ties broken by utilization). An index that no
-// longer exists (card removed) falls back to the hottest card.
+// longer exists (card removed) is not ok.
 func (s gpuSelector) pick(cards []gpuCard) (gpuCard, bool) {
 	if len(cards) == 0 {
 		return gpuCard{}, false
@@ -214,6 +214,7 @@ func (s gpuSelector) pick(cards []gpuCard) (gpuCard, bool) {
 				return c, true
 			}
 		}
+		return gpuCard{}, false // pinned card missing: report failure, not a different GPU
 	}
 	best := cards[0]
 	for _, c := range cards[1:] {
@@ -286,7 +287,15 @@ func (g gpuSource) stats(sel gpuSelector) (int, float64) {
 }
 
 // newGPUSource prefers AMD sysfs (free to poll) and falls back to nvidia-smi.
-func newGPUSource() gpuSource {
+// A pinned index (--gpu N) is an nvidia-smi index, so it goes straight to
+// nvidia-smi — otherwise an AMD iGPU would silently win over the card asked for.
+func newGPUSource(sel gpuSelector) gpuSource {
+	if sel.mode == "index" {
+		if smi, err := exec.LookPath("nvidia-smi"); err == nil {
+			return gpuSource{kind: "nvidia", smi: smi}
+		}
+		return gpuSource{}
+	}
 	for _, hwmon := range hwmonsNamed("amdgpu") {
 		labels, _ := filepath.Glob(filepath.Join(hwmon, "temp*_label"))
 		sort.Strings(labels)

@@ -10,8 +10,22 @@ import (
 
 const (
 	usbVID = "2516" // Cooler Master Co., Ltd.
-	usbPID = "0234" // MLQ-Core-Nex-Digital
+	usbPID = "0234" // MLQ-Core-Nex-Digital-WH
 )
+
+// usbPIDs lists every product id that speaks the same report-0x10 protocol.
+// 0232 = MLQ-Core-Nex-Digital-BK (issue #1, identical HID report descriptor).
+var usbPIDs = []string{"0234", "0232"}
+
+// findCooler returns the hidraw node of the first known cooler model.
+func findCooler() (string, error) {
+	for _, pid := range usbPIDs {
+		if dev, err := findHidraw(usbVID, pid); err == nil {
+			return dev, nil
+		}
+	}
+	return "", errors.New("no matching device under /sys/class/hidraw")
+}
 
 // findHidraw returns the /dev/hidraw* node whose USB ancestry matches the
 // cooler's vendor/product id.

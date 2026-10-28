@@ -2,3 +2,4 @@
 # root. Install to /etc/udev/rules.d/60-corenexd.rules, then run:
 #   sudo udevadm control --reload && sudo udevadm trigger
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2516", ATTRS{idProduct}=="0234", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2516", ATTRS{idProduct}=="0232", MODE="0660", TAG+="uaccess"
